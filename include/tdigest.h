@@ -7,6 +7,8 @@
 #ifndef TDIGEST_H
 #define TDIGEST_H
 
+#define DEFAULT_COMPRESSION 400
+
 struct Centroid {
     long long weight;
     double mean;
@@ -30,7 +32,7 @@ struct TDigest {
     struct Centroid *centroids;
 };
 
-extern struct TDigest *tdigestNew(void);
+extern struct TDigest *tdigestNew(int compression);
 extern void tdigestAdd(struct TDigest *t, double x, long long w);
 extern void tdigestMerge(struct TDigest *t1, struct TDigest *t2);
 extern double tdigestCDF(struct TDigest *t, double x);

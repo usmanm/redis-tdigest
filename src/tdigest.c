@@ -20,7 +20,6 @@
 #include "redismodule.h"
 #include "tdigest.h"
 
-#define DEFAULT_COMPRESSION 400
 #define INTERPOLATE(x, x0, x1) (((x) - (x0)) / ((x1) - (x0)))
 #define INTEGRATED_LOCATION(compression, q) ((compression) * (asin(2 * (q) - 1) + M_PI / 2) / M_PI)
 #define FLOAT_EQ(f1, f2) (fabs((f1) - (f2)) <= FLT_EPSILON)
@@ -41,14 +40,14 @@ struct Point {
     struct Point *next;
 };
 
-struct TDigest *tdigestNew(void) {
+struct TDigest *tdigestNew(int compression) {
     struct TDigest *t = RedisModule_Alloc(sizeof(struct TDigest));
 
     memset(t, 0, sizeof(struct TDigest));
 
-    t->compression = DEFAULT_COMPRESSION;
-    t->size = ceil(t->compression * M_PI / 2) + 1;
-    t->threshold = 7.5 + 0.37 * t->compression - 2e-4 * pow(t->compression, 2);
+    t->compression = compression;
+    t->size = ceil(compression * M_PI / 2) + 1;
+    t->threshold = 7.5 + 0.37 * compression - 2e-4 * pow(compression, 2);
     t->min = INFINITY;
 
     return t;
