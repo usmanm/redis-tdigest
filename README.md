@@ -26,31 +26,31 @@ MODULE LOAD /path/to/tdigest.so
 
 ## API
 
-### `TDIGEST.NEW key compression`
+#### `TDIGEST.NEW key compression`
 
 Initializes a `key` to an empty t-digest structure with the `compression` provided.
 
 *Reply:* `"OK"`
 
-### `TDIGEST.ADD key value count [value count ...]`
+#### `TDIGEST.ADD key value count [value count ...]`
 
 Adds a `value` with the specified `count`. If key is is missing, an empty t-digest structure is initialized with a default compression of `400`. Returns the sum of counts for all values added.
 
 *Reply:* `long long`
 
-### `TDIGEST.CDF key value [value ...]`
+#### `TDIGEST.CDF key value [value ...]`
 
 Returns the cumulative distribution for all provided values. `value` must be a double. The cumulative distribution returned for all values is between `0..1`.
 
 *Reply:* `double` array or `nil` if key missing
 
-### `TDIGEST.QUANTILE key quantile [quantile ...]`
+#### `TDIGEST.QUANTILE key quantile [quantile ...]`
 
 Returns the estimate values at all provided quantiles. `quantile` must be a `double` between `0..1`.
 
 *Reply:* `double` array or `nil` if key missing
 
-### `TDIGEST.DEBUG key`
+#### `TDIGEST.DEBUG key`
 
 Prints debug information about the t-digest.
 
