@@ -5,7 +5,6 @@
  */
 
 #include <limits.h>
-#include <stdlib.h>
 
 #include "command.h"
 #include "tdigest.h"
@@ -65,8 +64,8 @@ static int TDigestTypeAdd_RedisCommand(RedisModuleCtx *ctx,
     }
 
     int num_added = (argc - 2) / 2;
-    double *values = malloc(sizeof(double) * num_added);
-    long long *counts = malloc(sizeof(long long) * num_added);
+    double *values = RedisModule_PoolAlloc(ctx, sizeof(double) * num_added);
+    long long *counts = RedisModule_PoolAlloc(ctx, sizeof(long long) * num_added);
 
     /* Validate all values and weights before trying to add them to ensure atomicity */
     int i;
@@ -106,9 +105,6 @@ static int TDigestTypeAdd_RedisCommand(RedisModuleCtx *ctx,
         total_count += counts[i];
     }
 
-    free(values);
-    free(counts);
-
     RedisModule_ReplyWithLongLong(ctx, total_count);
     RedisModule_ReplicateVerbatim(ctx);
 
@@ -134,7 +130,7 @@ static int TDigestTypeCDF_RedisCommand(RedisModuleCtx *ctx,
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
 
-    double *values = malloc(sizeof(double) * argc - 2);
+    double *values = RedisModule_PoolAlloc(ctx, sizeof(double) * argc - 2);
 
     int i;
     for (i = 2; i < argc; i++)
@@ -153,8 +149,6 @@ static int TDigestTypeCDF_RedisCommand(RedisModuleCtx *ctx,
     RedisModule_ReplyWithArray(ctx, argc - 2);
     for (i = 0; i < argc - 2; i++)
         RedisModule_ReplyWithDouble(ctx, tdigestCDF(t, values[i]));
-
-    free(values);
 
     return REDISMODULE_OK;
 }
@@ -178,7 +172,7 @@ static int TDigestTypeQuantile_RedisCommand(RedisModuleCtx *ctx,
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
 
-    double *quantiles = malloc(sizeof(double) * argc - 2);
+    double *quantiles = RedisModule_PoolAlloc(ctx, sizeof(double) * argc - 2);
 
     int i;
     for (i = 2; i < argc; i++)
@@ -198,8 +192,6 @@ static int TDigestTypeQuantile_RedisCommand(RedisModuleCtx *ctx,
     RedisModule_ReplyWithArray(ctx, argc - 2);
     for (i = 0; i < argc - 2; i++)
         RedisModule_ReplyWithDouble(ctx, tdigestCDF(t, quantiles[i]));
-
-    free(quantiles);
 
     return REDISMODULE_OK;
 }

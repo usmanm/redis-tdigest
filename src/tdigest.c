@@ -103,7 +103,7 @@ void tdigestCompress(struct TDigest *t) {
     int num_unmerged = t->num_buffered_pts;
     int old_num_centroids = t->num_centroids;
     int i, j;
-    struct MergeArgs *args;
+    struct MergeArgs args;
 
     if (!t->num_buffered_pts)
         return;
@@ -130,14 +130,13 @@ void tdigestCompress(struct TDigest *t) {
     qsort(unmerged_centroids, num_unmerged, sizeof(struct Centroid),
             centroid_cmp);
 
-    args = malloc(sizeof(struct MergeArgs));
-    memset(args, 0, sizeof(struct MergeArgs));
+    memset(&args, 0, sizeof(struct MergeArgs));
 
-    args->centroids = malloc(sizeof(struct Centroid) * t->size);
-    memset(args->centroids, 0, sizeof(struct Centroid) * t->size);
+    args.centroids = malloc(sizeof(struct Centroid) * t->size);
+    memset(args.centroids, 0, sizeof(struct Centroid) * t->size);
 
-    args->t = t;
-    args->min = INFINITY;
+    args.t = t;
+    args.min = INFINITY;
 
     i = 0;
     j = 0;
@@ -146,30 +145,30 @@ void tdigestCompress(struct TDigest *t) {
         struct Centroid *b = &t->centroids[j];
 
         if (a->mean <= b->mean) {
-            merge_centroid(args, a);
+            merge_centroid(&args, a);
             i++;
         } else {
-            merge_centroid(args, b);
+            merge_centroid(&args, b);
             j++;
         }
     }
 
     while (i < num_unmerged)
-        merge_centroid(args, &unmerged_centroids[i++]);
+        merge_centroid(&args, &unmerged_centroids[i++]);
 
     free(unmerged_centroids);
 
     while (j < t->num_centroids)
-        merge_centroid(args, &t->centroids[j++]);
+        merge_centroid(&args, &t->centroids[j++]);
 
     if (t->total_weight > 0) {
-        t->min = MIN(t->min, args->min);
+        t->min = MIN(t->min, args.min);
 
-        if (args->centroids[args->idx].weight <= 0)
-            args->idx--;
+        if (args.centroids[args.idx].weight <= 0)
+            args.idx--;
 
-        t->num_centroids = args->idx + 1;
-        t->max = MAX(t->max, args->max);
+        t->num_centroids = args.idx + 1;
+        t->max = MAX(t->max, args.max);
     }
 
     if (t->num_centroids > old_num_centroids) {
@@ -177,11 +176,10 @@ void tdigestCompress(struct TDigest *t) {
                 sizeof(struct Centroid) * t->num_centroids);
     }
 
-    memcpy(t->centroids, args->centroids,
+    memcpy(t->centroids, args.centroids,
             sizeof(struct Centroid) * t->num_centroids);
 
-    free(args->centroids);
-    free(args);
+    free(args.centroids);
 }
 
 void tdigestAdd(struct TDigest *t, double x, long long w) {
