@@ -55,3 +55,15 @@ Returns the estimate values at all provided quantiles. `quantile` must be a `dou
 Prints debug information about the t-digest.
 
 *Reply:* bulk strings array
+
+The reply is of the form:
+
+```
+1) TDIGEST (<compression>, <num_centroids>, <memory size>)
+2)   CENTROID (<mean>, <weight>)
+3)   CENTROID (<mean>, <weight>)
+4)   CENTROID (<mean>, <weight>)
+5)   ...
+```
+
+Centroids are printed in sorted order with respect to their mean.
