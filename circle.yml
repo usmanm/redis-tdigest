@@ -1,0 +1,13 @@
+dependencies:
+  pre:
+    - wget https://github.com/antirez/redis/archive/unstable.tar.gz
+    - tar xvzf unstable.tar.gz
+    - cd redis-unstable && make && sudo make install
+    - sudo pip install -r test/requirements.txt
+
+  post:
+    - make
+
+test:
+  override:
+    - make test

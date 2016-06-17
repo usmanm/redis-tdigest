@@ -1,6 +1,6 @@
 .PHONY: test
 
-OPT ?= -O2
+OPT ?= -O3
 
 CC = gcc
 CFLAGS = -Iinclude -fPIC -Wall -Wextra -lc -lm -std=gnu99 -g $(OPT)
