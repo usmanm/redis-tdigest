@@ -1,5 +1,7 @@
 # redis-tdigest
 
+[![Build Status](https://img.shields.io/circleci/project/usmanm/redis-tdigest.svg?style=flat-square)](https://circleci.com/gh/usmanm/redis-tdigest)
+
 This is a Redis module for the [t-digest](https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf) data structure which can be used for accurate online accumulation of rank-based statistics such as quantiles and cumulative distribution at a point. The implementation is based on the [Merging Digest](https://github.com/tdunning/t-digest/blob/master/src/main/java/com/tdunning/math/stats/MergingDigest.java) implementation by the author.
 
 ## Building & Loading
