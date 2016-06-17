@@ -1,3 +1,5 @@
+.PHONY: test
+
 OPT ?= -O2
 
 CC = gcc
@@ -20,3 +22,7 @@ noopt:
 clean:
 	find . -type f -name '*.o' -delete
 	find . -type f -name '*.so' -delete
+	find . -type f -name '*.pyc' -delete
+
+test: $(TARGET)
+	py.test -v test

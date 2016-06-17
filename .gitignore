@@ -38,3 +38,8 @@
 
 # Emacs temp files
 *~
+
+# Test files
+dump.rdb
+*.pyc
+test/__pycache__/

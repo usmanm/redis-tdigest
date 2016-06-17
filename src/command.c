@@ -21,7 +21,7 @@ static int TDigestTypeNew_RedisCommand(RedisModuleCtx *ctx,
         RedisModuleString **argv, int argc) {
     RedisModule_AutoMemory(ctx); /* Use automatic memory management. */
 
-    if (argc != 3)
+    if (argc != 2 && argc != 3)
         return RedisModule_WrongArity(ctx);
 
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1],
@@ -32,11 +32,17 @@ static int TDigestTypeNew_RedisCommand(RedisModuleCtx *ctx,
     }
 
     long long compression;
-    if ((RedisModule_StringToLongLong(argv[2], &compression) != REDISMODULE_OK)
-            || compression <= 0 || compression > INT_MAX) {
-        return RedisModule_ReplyWithError(ctx,
-                "ERR invalid compression: must be a positive 32 bit integer");
+
+    if (argc == 3)
+    {
+        if ((RedisModule_StringToLongLong(argv[2], &compression) != REDISMODULE_OK)
+                || compression <= 0 || compression > INT_MAX) {
+            return RedisModule_ReplyWithError(ctx,
+                    "ERR invalid compression: must be a positive 32 bit integer");
+        }
     }
+    else
+        compression = DEFAULT_COMPRESSION;
 
     struct TDigest *t = tdigestNew(compression);
     RedisModule_ModuleTypeSetValue(key, TDigestType, t);
@@ -191,7 +197,7 @@ static int TDigestTypeQuantile_RedisCommand(RedisModuleCtx *ctx,
 
     RedisModule_ReplyWithArray(ctx, argc - 2);
     for (i = 0; i < argc - 2; i++)
-        RedisModule_ReplyWithDouble(ctx, tdigestCDF(t, quantiles[i]));
+        RedisModule_ReplyWithDouble(ctx, tdigestQuantile(t, quantiles[i]));
 
     return REDISMODULE_OK;
 }
@@ -223,7 +229,8 @@ static int TDigestTypeDebug_RedisCommand(RedisModuleCtx *ctx,
 
     char buf[1024];
     sprintf(buf, "TDIGEST (%d, %d, %ld)", (int) t->compression,
-            t->num_centroids, sizeof(struct Centroid) * t->num_centroids);
+            t->num_centroids,
+            sizeof(struct TDigest) + sizeof(struct Centroid) * t->num_centroids);
     RedisModule_ReplyWithSimpleString(ctx, buf);
 
     int i;
@@ -298,10 +305,8 @@ static void TDigestTypeFree(void *value) {
 
 int RedisModule_OnLoad(RedisModuleCtx *ctx) {
     if (RedisModule_Init(ctx, TYPE_NAME, 1,
-            REDISMODULE_APIVER_1) == REDISMODULE_ERR) {
-        printf("FUCK 0");
+            REDISMODULE_APIVER_1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
-    }
 
     TDigestType = RedisModule_CreateDataType(ctx, TYPE_NAME, ENCODING_VER,
             TDigestTypeRdbLoad, TDigestTypeRdbSave, TDigestTypeAofRewrite,

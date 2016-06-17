@@ -18,7 +18,7 @@ This should generate a shared library called `tdigest.so` in the root folder. Yo
 loadmodule /path/to/tdigest.so
 ```
 
-Alternatively, you can load it on an ready running module by running the following commands:
+Alternatively, you can load it on an already running Redis server by issuing the following commands:
 
 ```
 MODULE LOAD /path/to/tdigest.so
@@ -26,9 +26,9 @@ MODULE LOAD /path/to/tdigest.so
 
 ## API
 
-#### `TDIGEST.NEW key compression`
+#### `TDIGEST.NEW key [compression]`
 
-Initializes a `key` to an empty t-digest structure with the `compression` provided.
+Initializes a `key` to an empty t-digest structure with the `compression` provided or with the default compression of `400`.
 
 *Reply:* `"OK"`
 
@@ -67,3 +67,15 @@ The reply is of the form:
 ```
 
 Centroids are printed in sorted order with respect to their mean.
+
+## Testing
+
+The integration tests require a running Redis server so you must have `redis-server` on your `PATH` or pass its location in an environment variable called `REDIS_SERVER`. Tests are written in Python and use the [pytest](http://pytest.org/latest/) unit testing library.
+
+```
+make test
+```
+
+## Contributing
+
+Bug reports, feature and pull requests are welcome! Please add tests for any non-trivial changes you submit.
