@@ -28,7 +28,7 @@ class Redis(object):
     # Redis to it
     sock.close()
 
-    rs = os.getenv('REDIS-SERVER', REDIS_SERVER)
+    rs = os.getenv('REDIS_SERVER', REDIS_SERVER)
     self.server = subprocess.Popen([rs, '--port', str(port)])
     self.client = redispy.StrictRedis(port=port)
 
