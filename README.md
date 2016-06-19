@@ -40,6 +40,12 @@ Adds a `value` with the specified `count`. If key is is missing, an empty t-dige
 
 *Reply:* `long long`
 
+#### `TDIGEST.MERGE destkey sourcekey [sourcekey ...]`
+
+Merges one or more `sourcekey` into `destkey`. If `destkey` is missing, an empty t-digest structure is initialized with a default compression of `400`.
+
+*Reply:* `"OK"`
+
 #### `TDIGEST.CDF key value [value ...]`
 
 Returns the cumulative distribution for all provided values. `value` must be a double. The cumulative distribution returned for all values is between `0..1`.
