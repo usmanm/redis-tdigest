@@ -117,6 +117,60 @@ static int TDigestTypeAdd_RedisCommand(RedisModuleCtx *ctx,
     return REDISMODULE_OK;
 }
 
+/* TDIGEST.MERGE destkey sourcekey [sourcekey ...] */
+static int TDigestTypeMerge_RedisCommand(RedisModuleCtx *ctx,
+        RedisModuleString **argv, int argc) {
+    RedisModule_AutoMemory(ctx); /* Use automatic memory management. */
+    int num_keys = 0;
+    int i, j;
+
+    if (RedisModule_IsKeysPositionRequest(ctx)) {
+        for (i = 1; i < argc; i++) {
+            RedisModule_KeyAtPos(ctx, i);
+        }
+        return REDISMODULE_OK;
+    }
+
+    if (argc < 3)
+        return RedisModule_WrongArity(ctx);
+
+    /* Validate all keys are either empty or tdigest. */
+    RedisModuleKey **keys = RedisModule_PoolAlloc(ctx, argc - 1);
+    for (i = 1; i < argc; i++) {
+        RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[i],
+                REDISMODULE_READ | REDISMODULE_WRITE);
+        int type = RedisModule_KeyType(key);
+        if (type != REDISMODULE_KEYTYPE_EMPTY
+                && RedisModule_ModuleTypeGetType(key) != TDigestType) {
+            return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+        }
+        if (i == 1 || type != REDISMODULE_KEYTYPE_EMPTY) {
+            keys[num_keys++] = key;
+        }
+    }
+
+    struct TDigest *t1, *t2;
+    if (RedisModule_KeyType(keys[0]) == REDISMODULE_KEYTYPE_EMPTY) {
+        t1 = tdigestNew(DEFAULT_COMPRESSION);
+        RedisModule_ModuleTypeSetValue(keys[0], TDigestType, t1);
+    } else {
+        t1 = RedisModule_ModuleTypeGetValue(keys[0]);
+    }
+
+    /* Add all centroids from sources to destination. */
+    for (i = 1; i < num_keys; i++) {
+        t2 = RedisModule_ModuleTypeGetValue(keys[i]);
+        for (j = 0; j < t2->num_centroids; j++) {
+            tdigestAdd(t1, t2->centroids[j].mean, t2->centroids[j].weight);
+        }
+    }
+
+    RedisModule_ReplyWithSimpleString(ctx, "OK");
+    RedisModule_ReplicateVerbatim(ctx);
+
+    return REDISMODULE_OK;
+}
+
 /* TDIGEST.CDF key value [value ...] */
 static int TDigestTypeCDF_RedisCommand(RedisModuleCtx *ctx,
         RedisModuleString **argv, int argc) {
@@ -322,6 +376,11 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
     if (RedisModule_CreateCommand(ctx, "tdigest.add",
             TDigestTypeAdd_RedisCommand, "write deny-oom", 1, 1,
             1) == REDISMODULE_ERR)
+        return REDISMODULE_ERR;
+
+    if (RedisModule_CreateCommand(ctx, "tdigest.merge",
+            TDigestTypeMerge_RedisCommand, "write deny-oom getkeys-api", 0, 0,
+            0) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     if (RedisModule_CreateCommand(ctx, "tdigest.cdf",
