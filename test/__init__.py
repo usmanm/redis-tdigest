@@ -52,6 +52,11 @@ class Redis(object):
     cmd_args.extend(map(str, args))
     return self.client.execute_command(*cmd_args)
 
+  def tdigest_merge(self, destkey, sourcekey, *args):
+    cmd_args = ['TDIGEST.MERGE', destkey, sourcekey]
+    cmd_args.extend(map(str, args))
+    return self.client.execute_command(*cmd_args)
+
   def tdigest_cdf(self, key, value, *args):
     cmd_args = ['TDIGEST.CDF', key, str(value)]
     cmd_args.extend(map(str, args))
