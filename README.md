@@ -36,7 +36,7 @@ Initializes a `key` to an empty t-digest structure with the `compression` provid
 
 #### `TDIGEST.ADD key value count [value count ...]`
 
-Adds a `value` with the specified `count`. If key is is missing, an empty t-digest structure is initialized with a default compression of `400`. Returns the sum of counts for all values added.
+Adds a `value` with the specified `count`. If `key` is missing, an empty t-digest structure is initialized with a default compression of `400`. Returns the sum of counts for all values added.
 
 *Reply:* `long long`
 
