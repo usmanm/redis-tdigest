@@ -19,33 +19,47 @@ def cdf(x, values):
 
 def run_test_for_dist(redis, distfn):
   key = distfn.__name__
+  keydest = key + ':dest'
+  key0 = key + ':0'
+  key1 = key + ':1'
+  testkeys = [key, keydest, key0]
   redis.tdigest_new(key)
+  redis.tdigest_new(key0)
+  redis.tdigest_new(key1)
 
   quantiles = [0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999]
   values = []
 
-  for _ in xrange(NUM_VALUES):
+  for i in xrange(NUM_VALUES):
     v = distfn()
     redis.tdigest_add(key, v, 1)
+    if 0 == i % 2:
+      redis.tdigest_add(key0, v, 1)
+    else:
+      redis.tdigest_add(key1, v, 1)
     values.append(v)
 
+
+  redis.tdigest_merge(keydest, key0, key1)
+  redis.tdigest_merge(key0, key1)
+
   values = sorted(values)
-  soft_errs = 0
 
-  redis.tdigest_meta(key)
+  for k in testkeys:
+    soft_errs = 0
+    redis.tdigest_meta(k)
+    for i, q in enumerate(quantiles):
+      ix = NUM_VALUES * quantiles[i] - 0.5;
+      idx = int(math.floor(ix))
+      p = ix - idx;
+      x = values[idx] * (1 - p) + values[idx + 1] * p;
+      estimate_x = float(redis.tdigest_quantile(k, q)[0])
+      estimate_q = float(redis.tdigest_cdf(k, x)[0])
 
-  for i, q in enumerate(quantiles):
-    ix = NUM_VALUES * quantiles[i] - 0.5;
-    idx = int(math.floor(ix))
-    p = ix - idx;
-    x = values[idx] * (1 - p) + values[idx + 1] * p;
-    estimate_x = float(redis.tdigest_quantile(key, q)[0])
-    estimate_q = float(redis.tdigest_cdf(key, x)[0])
-
-    assert abs(q - estimate_q) < 0.005
-    if abs(cdf(estimate_x, values) - q) > 0.005:
-      soft_errs += 1
-  assert soft_errs < 3
+      assert abs(q - estimate_q) < 0.005
+      if abs(cdf(estimate_x, values) - q) > 0.005:
+        soft_errs += 1
+    assert soft_errs < 3
 
 
 def test_uniform(redis, flushdb):
