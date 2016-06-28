@@ -326,14 +326,14 @@ void tdigestMerge(struct TDigest *t1, struct TDigest *t2) {
     int i = t2->num_buffered_pts;
     struct Point *p = t2->buffered_pts;
 
-    for (i = 0; i < t2->num_centroids; i++) {
-        tdigestAdd(t1, t2->centroids[i].mean, t2->centroids[i].weight);
-    }
-    
     while (i) {
         tdigestAdd(t1, p->value, p->weight);
         p = p->next;
         i--;
+    }
+
+    for (i = 0; i < t2->num_centroids; i++) {
+        tdigestAdd(t1, t2->centroids[i].mean, t2->centroids[i].weight);
     }
 }
 
