@@ -39,7 +39,6 @@ def run_test_for_dist(redis, distfn):
       redis.tdigest_add(key1, v, 1)
     values.append(v)
 
-
   redis.tdigest_merge(keydest, key0, key1)
   redis.tdigest_merge(key0, key1)
 
