@@ -349,10 +349,6 @@ static void TDigestTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key,
     }
 }
 
-static void TDigestTypeDigest(RedisModuleDigest *digest, void *value) {
-    /* TODO: The DIGEST module interface is yet not implemented. */
-}
-
 static void TDigestTypeFree(void *value) {
     tdigestFree(value);
 }
@@ -362,9 +358,13 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
             REDISMODULE_APIVER_1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    TDigestType = RedisModule_CreateDataType(ctx, TYPE_NAME, ENCODING_VER,
-            TDigestTypeRdbLoad, TDigestTypeRdbSave, TDigestTypeAofRewrite,
-            TDigestTypeDigest, TDigestTypeFree);
+    RedisModuleTypeMethods tm = { .version = REDISMODULE_TYPE_METHOD_VERSION,
+	                          .rdb_load = TDigestTypeRdbLoad,
+				  .rdb_save = TDigestTypeRdbSave,
+				  .aof_rewrite = TDigestTypeAofRewrite,
+				  .free = TDigestTypeFree };
+
+    TDigestType = RedisModule_CreateDataType(ctx, TYPE_NAME, ENCODING_VER, &tm);
     if (TDigestType == NULL)
         return REDISMODULE_ERR;
 
