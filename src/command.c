@@ -349,6 +349,14 @@ static void TDigestTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key,
     }
 }
 
+static size_t TDigestMemUsage(const void *value) {
+    const struct TDigest *t = value;
+    size_t sz = sizeof(struct TDigest);
+    sz += t->num_buffered_pts * sizeof(struct Point);
+    sz += t->num_centroids * sizeof(struct Centroid);
+    return sz;
+}
+
 static void TDigestTypeFree(void *value) {
     tdigestFree(value);
 }
@@ -362,6 +370,7 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
 	                          .rdb_load = TDigestTypeRdbLoad,
 				  .rdb_save = TDigestTypeRdbSave,
 				  .aof_rewrite = TDigestTypeAofRewrite,
+				  .mem_usage = TDigestMemUsage,
 				  .free = TDigestTypeFree };
 
     TDigestType = RedisModule_CreateDataType(ctx, TYPE_NAME, ENCODING_VER, &tm);

@@ -14,7 +14,11 @@ struct Centroid {
     double mean;
 };
 
-struct Point;
+struct Point {
+    double value;
+    long long weight;
+    struct Point *next;
+};
 
 struct TDigest {
     double compression;

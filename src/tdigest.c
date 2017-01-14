@@ -34,12 +34,6 @@
       __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 
-struct Point {
-    double value;
-    long long weight;
-    struct Point *next;
-};
-
 struct TDigest *tdigestNew(int compression) {
     struct TDigest *t = RedisModule_Alloc(sizeof(struct TDigest));
 
