@@ -43,3 +43,4 @@
 dump.rdb
 *.pyc
 test/__pycache__/
+test/.cache/
