@@ -18,7 +18,7 @@ class Redis(object):
   def __init__(self):
     self.port = None
 
-  def start(self):
+  def start(self, redisargs=[]):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('', 0))
     _, port = sock.getsockname()
@@ -29,16 +29,14 @@ class Redis(object):
     sock.close()
 
     rs = os.getenv('REDIS_SERVER', REDIS_SERVER)
-    self.server = subprocess.Popen([rs, '--port', str(port)])
+    self.server = subprocess.Popen([rs, '--port', str(port), '--loadmodule', TDIGEST_SO] + redisargs)
     self.client = redispy.StrictRedis(port=port)
 
     # Wait for Redis to start up
     time.sleep(1)
 
-    # Load t-digest module
-    self.client.execute_command('MODULE', 'LOAD', TDIGEST_SO)
-
   def stop(self):
+    self.client.shutdown()
     self.server.terminate()
 
   def tdigest_new(self, key, compression=None):
@@ -77,22 +75,46 @@ class Redis(object):
   def info(self):
     return self.client.info()
 
+  def flushdb(self):
+    self.client.flushdb()
+
+  def reload_from_rdb(self):
+    self.client.save()
+    self.stop()
+    self.start()
+
+  def reload_from_aof(self):
+    # if the RDB preamble is enabled, `BGREWRITEAOF` won't actually
+    # call `TDigestTypeAofRewrite`
+    self.client.config_set('aof-use-rdb-preamble', 'no')
+    self.client.bgrewriteaof()
+    # Wait for the background rewrite to complete
+    time.sleep(2)
+
+    self.stop()
+    self.start(redisargs=['--appendonly', 'yes'])
 
 @pytest.fixture
 def flushdb(request):
   r = request.module.redis
-  request.addfinalizer(r.client.flushdb)
+  request.addfinalizer(r.flushdb)
 
 
 @pytest.fixture(scope='module')
 def redis(request):
   r = Redis()
 
-  def client_shutdown():
-    r.client.shutdown()
+  def persistence_cleanup():
+    def cleanup(filename):
+      try:
+        os.remove(filename)
+      except OSError:
+        pass
 
-  request.addfinalizer(client_shutdown)
+    map(cleanup, ['dump.rdb', 'appendonly.aof'])
+
   request.addfinalizer(r.stop)
+  request.addfinalizer(persistence_cleanup)
 
   # Attach it to the module so we can access it with test-scoped fixtures
   request.module.redis = r
