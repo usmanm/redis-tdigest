@@ -153,3 +153,19 @@ def test_mem_leak(redis, flushdb):
   # %age difference should be < 1%
   percent_diff = abs(end_rss_mem - start_rss_mem) / float(end_rss_mem)
   assert percent_diff < 0.01
+
+
+def run_persistence_test(redis, reloadfn):
+  redis.tdigest_new('test_aof0')
+  for i in xrange(10):
+    redis.tdigest_add('test_aof0', i, 1)
+  assert redis.client.type('test_aof0') == 't-digest0'
+  reloadfn()
+  assert redis.client.type('test_aof0') == 't-digest0'
+
+
+def test_aof(redis, flushdb):
+  run_persistence_test(redis, redis.reload_from_aof)
+
+def test_rdb(redis, flushdb):
+  run_persistence_test(redis, redis.reload_from_rdb)

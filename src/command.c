@@ -338,13 +338,18 @@ static void TDigestTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key,
     struct TDigest *t = value;
     int i;
 
-    RedisModule_EmitAOF(aof, "TDIGEST.NEW", "%s %ll", key, t->compression);
+    char dbuf[128];
+    unsigned int dlen;
+    dlen = snprintf(dbuf, sizeof(dbuf), "%.17g", t->compression);
+
+    RedisModule_EmitAOF(aof, "TDIGEST.NEW", "sb", key, dbuf, dlen);
 
     tdigestCompress(t);
 
     for (i = 0; i < t->num_centroids; i++) {
         struct Centroid *c = &t->centroids[i];
-        RedisModule_EmitAOF(aof, "TDIGEST.ADD", "%s %f %ll", key, c->mean,
+        dlen = snprintf(dbuf, sizeof(dbuf), "%.17g", c->mean);
+        RedisModule_EmitAOF(aof, "TDIGEST.ADD", "sbl", key, dbuf, dlen,
                 c->weight);
     }
 }
